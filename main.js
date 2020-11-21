@@ -17,6 +17,8 @@ let graphLab = document.getElementById('labdiv');
 
 var fftByteArray = new Uint16Array(4096);
 
+var devicename = 'data' ;
+
 // при нажатии на кнопку START
 startButton.addEventListener('click', function() {
   log('start');
@@ -52,13 +54,6 @@ fftStartButton.addEventListener('click', function() {
   var converted = new Uint16Array([value]);
   characteristic.writeValue(converted);
 });
-
-// при нажатии на кнопку FFTSAVE
-fftSaveButton.addEventListener('click', function() {
-  log('fftsave');
-  ShowGrf();
-});
-
 
 
 // при нажатии на кнопку STOP
@@ -137,6 +132,7 @@ function requestBluetoothDevice() {
 	  optionalServices: [0xAA80, 0xAA64]
   }).then(device => {
       log('"' + device.name + '" bluetooth device selected');
+	  devicename = device.name ;
       deviceCache = device;
 
       // Добавленная строка
@@ -345,9 +341,10 @@ function handleFftChanged(event) {
   fftByteArray[block*9+8] = event.target.value.getUint16(1+16, true) ;
   if(block == 75) {
     //log("fft " + block + ' ' + fftByteArray[0], 'in');
-	console.log(fftByteArray);
 	datau = [] ;
-	for (let i=1;i<75*9;i+=1) { datau.push([(i*2*3600/4095), fftByteArray[i]]); }
+	var freq ;
+	for (let i=1;i<75*9;i+=1) { freq = (i*2*3600/4095) ; datau.push([freq, fftByteArray[i]]); }
+	console.log(datau);
 	ShowGrf();
   }
 }
@@ -430,4 +427,40 @@ var renderChart = function() {
 	} else dl = datau.length/smprate;
 	if(rend && datau.length != 0) gu.updateOptions({'file': datau});
 }
+
+function convertArrayOfObjectsToCSV(value){
+	var result, ctr, keys, columnDelimiter, lineDelimiter, data;
+
+	data = value.data || null;
+	if (data == null || !data.length) {return null;}
+	columnDelimiter = value.columnDelimiter || ';';
+	lineDelimiter = value.lineDelimiter || '\n';
+	keys = Object.keys(data[1]);
+	result = '';
+	result += keys.join(columnDelimiter);
+	result += lineDelimiter;
+	data.forEach(function(item){
+		ctr = 0;
+		keys.forEach(function(key){
+			if (ctr > 0)
+				result += columnDelimiter;
+			result += item[key].toFixed(3).replace(".",",");
+			ctr++;
+		});
+		result += lineDelimiter;
+	});
+	return result;
+}
+
+// при нажатии на кнопку FFTSAVE
+fftSaveButton.addEventListener('click', function() {
+  log('fftsave to csv');
+  var csv = convertArrayOfObjectsToCSV({data: datau});
+  if (!csv.match(/^data:text\/csv/i)) {csv = 'data:text/csv;charset=utf-8,' + csv;}
+  var encodedUri = encodeURI(csv);
+  var link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download',devicename.replace("#","")+".csv");
+  link.click();
+});
 
