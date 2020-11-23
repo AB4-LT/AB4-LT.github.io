@@ -19,6 +19,8 @@ var fftByteArray = new Uint16Array(4096);
 
 var devicename = 'data' ;
 
+var coefficient_freq = 10000 ;
+
 // при нажатии на кнопку START
 startButton.addEventListener('click', function() {
   log('start');
@@ -93,6 +95,7 @@ sendForm.addEventListener('submit', function(event) {
   event.preventDefault(); // Предотвратить отправку формы
   send();
   log("send " + inputField.value, 'out');
+  coefficient_freq = inputField.value ;
   // send(inputField.value); // Отправить содержимое текстового поля
 //  inputField.value = '';  // Обнулить текстовое поле
   inputField.focus();     // Вернуть фокус на текстовое поле
@@ -343,7 +346,7 @@ function handleFftChanged(event) {
     //log("fft " + block + ' ' + fftByteArray[0], 'in');
 	datau = [] ;
 	var freq ;
-	for (let i=1;i<75*9;i+=1) { freq = (i*2*3600/4095) ; datau.push([freq, fftByteArray[i]/4000]); }
+	for (let i=1;i<75*9;i+=1) { freq = (i*2*3200/4096*10000/coefficient_freq) ; datau.push([freq, fftByteArray[i]/4000]); }
 	console.log(datau);
 	ShowGrf();
   }
@@ -353,6 +356,7 @@ function handleFftChanged(event) {
 function handleCoefficientValueChanged(event) {
   log("coefficient " + event.target.value.getInt16(0), 'in'); // (0, littleEndian)
   inputField.value = event.target.value.getInt16(0) ;
+  coefficient_freq = event.target.value.getInt16(0) ;
   fftCharacteristic.startNotifications();
 }
 
