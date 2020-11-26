@@ -138,6 +138,7 @@ function requestBluetoothDevice() {
 	  devicename = device.name ;
       deviceCache = device;
 
+      disconnectButton.innerHTML = "Disconnect " + devicename ;
       // Добавленная строка
       deviceCache.addEventListener('gattserverdisconnected', handleDisconnection);
 
@@ -360,10 +361,15 @@ function handleCoefficientValueChanged(event) {
   fftCharacteristic.startNotifications();
 }
 
+var summ_vibrospeed = 0 ;
+var averaged_vibrospeed = 0 ;
 // Получение данных
 function handleCharacteristicValueChanged(event) {
   log(event.target.value.getInt32(0)/100, 'in'); // (0, littleEndian)
-  vibrospeedLabel.innerHTML =  event.target.value.getInt32(0)/100 ;
+  summ_vibrospeed += event.target.value.getInt32(0) ;
+  summ_vibrospeed -= averaged_vibrospeed ;
+  averaged_vibrospeed = summ_vibrospeed / 2 ;
+  vibrospeedLabel.innerHTML =  event.target.value.getInt32(0)/100 + ' [' + (averaged_vibrospeed/100).toFixed(2).replace(".",",") + ']';
 }
 
 function int16ToInt8Array(value) {
