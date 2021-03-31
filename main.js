@@ -6,16 +6,20 @@ let sendForm = document.getElementById('send-form');
 let inputField = document.getElementById('input');
 let startButton = document.getElementById('startBtn');
 let fftStartButton = document.getElementById('fftStartBtn');
+let rawDataStartButton = document.getElementById('rawDataStartBtn');
 let fftSaveButton = document.getElementById('fftSaveBtn');
 let stopButton = document.getElementById('stopBtn');
 let clearButton = document.getElementById('clrBtn');
 let attCheckbox = document.getElementById('attenuator');
+let hz1600Checkbox = document.getElementById('HZ1600');
+
 let vibrospeedLabel = document.getElementById('vibrospeed');
 let graphDiv = document.getElementById('div_v');
 let graphLab = document.getElementById('labdiv');
 
 
 var fftByteArray = new Uint16Array(4096);
+var rawDataByteArray = new Int16Array(2*4096+10);
 
 var devicename = 'data' ;
 
@@ -33,6 +37,10 @@ startButton.addEventListener('click', function() {
   if ($('#once').is(':checked')){
     value |= 0x20 ;
 	log('однократно');
+  } 
+  if ($('#HZ1600').is(':checked')){
+    value |= 0x04 ;
+	log('HZ1600');
   } 
   var characteristic = charArray[uuid].characteristic;
   var converted = new Uint16Array([value]);
@@ -52,6 +60,33 @@ fftStartButton.addEventListener('click', function() {
     value |= 0x20 ;
 	log('однократно');
   } 
+  if ($('#HZ1600').is(':checked')){
+    value |= 0x04 ;
+	log('HZ1600');
+  } 
+  var characteristic = charArray[uuid].characteristic;
+  var converted = new Uint16Array([value]);
+  characteristic.writeValue(converted);
+});
+
+// при нажатии на кнопку RAWDATA_START
+rawDataStartButton.addEventListener('click', function() {
+  log('rawdata_start');
+  var uuid = $('#startBtn').attr('data-uuid');
+  var value = 0x09 ; 
+  if (!$('#attenuator').is(':checked')){
+    value |= 0x40 ;
+	log('ATT Выключен');
+  } 
+  if ($('#once').is(':checked')){
+    value |= 0x20 ;
+	log('однократно');
+  } 
+  if ($('#HZ1600').is(':checked')){
+    value |= 0x04 ;
+	log('HZ1600');
+  } 
+  
   var characteristic = charArray[uuid].characteristic;
   var converted = new Uint16Array([value]);
   characteristic.writeValue(converted);
@@ -72,6 +107,10 @@ stopButton.addEventListener('click', function() {
 clearButton.addEventListener('click', function() {
   log('clear');
   terminalContainer.innerHTML = "";
+  for (let i=1;i<4096;i+=1) { fftByteArray[i] = 0 ; }
+  for (let i=1;i<2*4096;i+=1) { rawDataByteArray[i] = 0 ; }
+  datau = [] ;
+  ShowGrf();
 });
 
 
@@ -333,22 +372,44 @@ function disconnect() {
 // Получение fft data
 function handleFftChanged(event) {
   var block = event.target.value.getUint8(0) ;
-  fftByteArray[block*9+0] = event.target.value.getUint16(1+0, true) ;
-  fftByteArray[block*9+1] = event.target.value.getUint16(1+2, true) ;
-  fftByteArray[block*9+2] = event.target.value.getUint16(1+4, true) ;
-  fftByteArray[block*9+3] = event.target.value.getUint16(1+6, true) ;
-  fftByteArray[block*9+4] = event.target.value.getUint16(1+8, true) ;
-  fftByteArray[block*9+5] = event.target.value.getUint16(1+10, true) ;
-  fftByteArray[block*9+6] = event.target.value.getUint16(1+12, true) ;
-  fftByteArray[block*9+7] = event.target.value.getUint16(1+14, true) ;
-  fftByteArray[block*9+8] = event.target.value.getUint16(1+16, true) ;
-  if(block == 75) {
-    //log("fft " + block + ' ' + fftByteArray[0], 'in');
-	datau = [] ;
-	var freq ;
-	for (let i=1;i<75*9;i+=1) { freq = (i*2*3200/4096*10000/coefficient_freq) ; datau.push([freq, fftByteArray[i]/4000]); }
-	console.log(datau);
-	ShowGrf();
+  if(block < 0x80) { //приём 75 блоков FFT
+      fftByteArray[block*9+0] = event.target.value.getUint16(1+0, true) ;
+      fftByteArray[block*9+1] = event.target.value.getUint16(1+2, true) ;
+      fftByteArray[block*9+2] = event.target.value.getUint16(1+4, true) ;
+      fftByteArray[block*9+3] = event.target.value.getUint16(1+6, true) ;
+      fftByteArray[block*9+4] = event.target.value.getUint16(1+8, true) ;
+      fftByteArray[block*9+5] = event.target.value.getUint16(1+10, true) ;
+      fftByteArray[block*9+6] = event.target.value.getUint16(1+12, true) ;
+      fftByteArray[block*9+7] = event.target.value.getUint16(1+14, true) ;
+      fftByteArray[block*9+8] = event.target.value.getUint16(1+16, true) ;
+      if(block == 75) {
+        //log("fft " + block + ' ' + fftByteArray[0], 'in');
+        datau = [] ;
+        var freq ;
+        for (let i=1;i<75*9;i+=1) { freq = (i*2*3200/4096*10000/coefficient_freq) ; datau.push([freq, fftByteArray[i]/4000]); }
+        console.log(datau);
+        ShowGrf();
+		freq = 0 ; datau.push([freq, fftByteArray[0]/4000]);
+      }
+  } else { //приём 4096*2/9 блоков сырых данных
+      var block = event.target.value.getUint16(0, false) - 0x8000 ;
+      rawDataByteArray[block*9+0] = event.target.value.getInt16(2+0, false) ;
+      rawDataByteArray[block*9+1] = event.target.value.getInt16(2+2, false) ;
+      rawDataByteArray[block*9+2] = event.target.value.getInt16(2+4, false) ;
+      rawDataByteArray[block*9+3] = event.target.value.getInt16(2+6, false) ;
+      rawDataByteArray[block*9+4] = event.target.value.getInt16(2+8, false) ;
+      rawDataByteArray[block*9+5] = event.target.value.getInt16(2+10, false) ;
+      rawDataByteArray[block*9+6] = event.target.value.getInt16(2+12, false) ;
+      rawDataByteArray[block*9+7] = event.target.value.getInt16(2+14, false) ;
+      rawDataByteArray[block*9+8] = event.target.value.getInt16(2+16, false) ;
+	  console.log(block + ' ' + rawDataByteArray[block*9+0]);
+      if(block ==  910) { // 4096*2/9 
+        //log("fft " + block + ' ' + fftByteArray[0], 'in');
+        datau = [] ;
+        for (let i=0;i<4096*2;i+=1) { datau.push([i, rawDataByteArray[i]]); }
+        console.log(datau);
+        ShowGrf();
+      }
   }
 }
 
@@ -411,7 +472,7 @@ function ShowGrf() {
 					digitsAfterDecimal: 3,
 			});
 //		setInterval(function(){renderChart()}, 50);
-		stg = 1;
+		stg = 0;
 	} else {
 		gu.updateOptions({'file': datau});
 	}
@@ -442,8 +503,9 @@ function convertArrayOfObjectsToCSV(value){
 	lineDelimiter = value.lineDelimiter || '\n';
 	keys = Object.keys(data[1]);
 	result = '';
-	result += keys.join(columnDelimiter);
-	result += lineDelimiter;
+	//result += vibrospeedLabel.innerHTML + " mm/s" + lineDelimiter;
+	//result += keys.join(columnDelimiter);
+	//result += lineDelimiter;
 	data.forEach(function(item){
 		ctr = 0;
 		keys.forEach(function(key){
@@ -465,7 +527,13 @@ fftSaveButton.addEventListener('click', function() {
   var encodedUri = encodeURI(csv);
   var link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download',devicename.replace("#","")+".csv");
+  if ($('#HZ1600').is(':checked')){
+    link.setAttribute('download',devicename.replace("#","")+"_1600_"+vibrospeedLabel.innerHTML+".csv");
+  } else {
+    link.setAttribute('download',devicename.replace("#","")+"_"+vibrospeedLabel.innerHTML+".csv");
+  }  
+  
+
   link.click();
 });
 
