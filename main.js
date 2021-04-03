@@ -18,7 +18,11 @@ let graphDiv = document.getElementById('div_v');
 let graphLab = document.getElementById('labdiv');
 
 
-var fftByteArray = new Uint16Array(4096);
+var pic32_fft_points = 2*4096
+var pic32_fft_len = 2*4096
+var pic32_sample_freq = 3200
+var n_points = 4096 ;
+var fftByteArray = new Uint16Array(2*4096+10);
 var rawDataByteArray = new Int16Array(2*4096+10);
 
 var devicename = 'data' ;
@@ -373,43 +377,66 @@ function disconnect() {
 function handleFftChanged(event) {
   var block = event.target.value.getUint8(0) ;
   if(block < 0x80) { //приём 75 блоков FFT
-      fftByteArray[block*9+0] = event.target.value.getUint16(1+0, true) ;
-      fftByteArray[block*9+1] = event.target.value.getUint16(1+2, true) ;
-      fftByteArray[block*9+2] = event.target.value.getUint16(1+4, true) ;
-      fftByteArray[block*9+3] = event.target.value.getUint16(1+6, true) ;
-      fftByteArray[block*9+4] = event.target.value.getUint16(1+8, true) ;
-      fftByteArray[block*9+5] = event.target.value.getUint16(1+10, true) ;
-      fftByteArray[block*9+6] = event.target.value.getUint16(1+12, true) ;
-      fftByteArray[block*9+7] = event.target.value.getUint16(1+14, true) ;
-      fftByteArray[block*9+8] = event.target.value.getUint16(1+16, true) ;
-      if(block == 75) {
-        //log("fft " + block + ' ' + fftByteArray[0], 'in');
-        datau = [] ;
-        var freq ;
-        for (let i=1;i<75*9;i+=1) { freq = (i*2*3200/4096*10000/coefficient_freq) ; datau.push([freq, fftByteArray[i]/4000]); }
-        console.log(datau);
-        ShowGrf();
+      if(block == 0x7F) {
+		n_points          = event.target.value.getUint16(1+0, true)*9 ;
+		pic32_fft_points  = event.target.value.getUint16(1+2, true) ;
+		pic32_fft_len     = event.target.value.getUint16(1+4, true) ;
+		pic32_sample_freq = event.target.value.getUint16(1+6, true) ;
+		coefficient_freq  = event.target.value.getUint16(1+8, true) ;
+		inputField.value = coefficient_freq ;
+
+		if(pic32_fft_points > pic32_fft_len) {pic32_fft_points = pic32_fft_len ;}
+
+		console.log('fft data ' + n_points + ' ' + pic32_fft_points + ' ' + pic32_fft_len + ' ' + pic32_sample_freq + ' ' + coefficient_freq);
+
+		datau = [] ;
+		var freq ;
+		for (let i=1;i<n_points;i+=1) { freq = (i*(pic32_fft_points/n_points)*(pic32_sample_freq/pic32_fft_len)*(10000/coefficient_freq)) ; datau.push([freq, fftByteArray[i]/4000]); }
+		console.log(datau);
+		ShowGrf();
 		freq = 0 ; datau.push([freq, fftByteArray[0]/4000]);
-      }
+      } else {
+		fftByteArray[block*9+0] = event.target.value.getUint16(1+0, true) ;
+		fftByteArray[block*9+1] = event.target.value.getUint16(1+2, true) ;
+		fftByteArray[block*9+2] = event.target.value.getUint16(1+4, true) ;
+		fftByteArray[block*9+3] = event.target.value.getUint16(1+6, true) ;
+		fftByteArray[block*9+4] = event.target.value.getUint16(1+8, true) ;
+		fftByteArray[block*9+5] = event.target.value.getUint16(1+10, true) ;
+		fftByteArray[block*9+6] = event.target.value.getUint16(1+12, true) ;
+		fftByteArray[block*9+7] = event.target.value.getUint16(1+14, true) ;
+		fftByteArray[block*9+8] = event.target.value.getUint16(1+16, true) ;
+		console.log(block + ' ' + fftByteArray[block*9+0]);
+	  }
   } else { //приём 4096*2/9 блоков сырых данных
-      var block = event.target.value.getUint16(0, false) - 0x8000 ;
-      rawDataByteArray[block*9+0] = event.target.value.getInt16(2+0, false) ;
-      rawDataByteArray[block*9+1] = event.target.value.getInt16(2+2, false) ;
-      rawDataByteArray[block*9+2] = event.target.value.getInt16(2+4, false) ;
-      rawDataByteArray[block*9+3] = event.target.value.getInt16(2+6, false) ;
-      rawDataByteArray[block*9+4] = event.target.value.getInt16(2+8, false) ;
-      rawDataByteArray[block*9+5] = event.target.value.getInt16(2+10, false) ;
-      rawDataByteArray[block*9+6] = event.target.value.getInt16(2+12, false) ;
-      rawDataByteArray[block*9+7] = event.target.value.getInt16(2+14, false) ;
-      rawDataByteArray[block*9+8] = event.target.value.getInt16(2+16, false) ;
-	  console.log(block + ' ' + rawDataByteArray[block*9+0]);
-      if(block ==  910) { // 4096*2/9 
-        //log("fft " + block + ' ' + fftByteArray[0], 'in');
+      var block = event.target.value.getUint16(0, false) ;
+      if(block ==  0xFFFF) { // 4096*2/9 
+		pic32_fft_points  = event.target.value.getUint16(2+0, false) ;
+		pic32_fft_len     = event.target.value.getUint16(2+2, false) ;
+		pic32_sample_freq = event.target.value.getUint16(2+4, false) ;
+		coefficient_freq  = event.target.value.getUint16(2+6, false) ;
+		inputField.value = coefficient_freq ;
+		
+		if(pic32_fft_points > pic32_fft_len) {pic32_fft_points = pic32_fft_len ;}
+
+		console.log('rawpoint data ' + pic32_fft_points + ' ' + pic32_fft_len + ' ' + pic32_sample_freq + ' ' + coefficient_freq);
+
         datau = [] ;
-        for (let i=0;i<4096*2;i+=1) { datau.push([i, rawDataByteArray[i]]); }
+        for (let i=0;i<pic32_fft_points;i+=1) { datau.push([i, rawDataByteArray[i]]); }
         console.log(datau);
         ShowGrf();
-      }
+      } else {
+		block -= 0x8000 ;
+		rawDataByteArray[block*9+0] = event.target.value.getInt16(2+0, false) ;
+		rawDataByteArray[block*9+1] = event.target.value.getInt16(2+2, false) ;
+		rawDataByteArray[block*9+2] = event.target.value.getInt16(2+4, false) ;
+		rawDataByteArray[block*9+3] = event.target.value.getInt16(2+6, false) ;
+		rawDataByteArray[block*9+4] = event.target.value.getInt16(2+8, false) ;
+		rawDataByteArray[block*9+5] = event.target.value.getInt16(2+10, false) ;
+		rawDataByteArray[block*9+6] = event.target.value.getInt16(2+12, false) ;
+		rawDataByteArray[block*9+7] = event.target.value.getInt16(2+14, false) ;
+		rawDataByteArray[block*9+8] = event.target.value.getInt16(2+16, false) ;
+		console.log(block + ' ' + rawDataByteArray[block*9+0]);
+	  }
   }
 }
 
