@@ -10,8 +10,8 @@ let rawDataStartButton = document.getElementById('rawDataStartBtn');
 let fftSaveButton = document.getElementById('fftSaveBtn');
 let stopButton = document.getElementById('stopBtn');
 let clearButton = document.getElementById('clrBtn');
-let attCheckbox = document.getElementById('attenuator');
-let hz1600Checkbox = document.getElementById('HZ1600');
+//let attCheckbox = document.getElementById('attenuator');
+//let hz1600Checkbox = document.getElementById('HZ1600');
 
 let vibrospeedLabel = document.getElementById('vibrospeed');
 let graphDiv = document.getElementById('div_v');
@@ -29,23 +29,63 @@ var devicename = 'data' ;
 
 var coefficient_freq = 10000 ;
 
+function add_cfg_bits(in_byte) {
+  str = ''
+  if (!$('#attenuator').is(':checked')){
+    in_byte |= 0x40 ;
+    str += ' ATT Выключен ' ;
+  } 
+  if ($('#once').is(':checked')){
+    in_byte |= 0x20 ;
+    str += ' однократно ' ;
+  } 
+  if ($('#HZ1600').is(':checked')){
+    in_byte |= 0x04 ;
+	str += ' HZ1600 ' ;
+  } 
+  if ($('#p4096').is(':checked')){
+    in_byte |= 0x0100 ;
+	str += ' p4096 ' ;
+  } 
+  if ($('#p1024').is(':checked')){
+    in_byte |= 0x0200 ;
+	str += ' p1024 ' ;
+  } 
+  if ($('#f200').is(':checked')){
+    in_byte |= 0x1000 ;
+	str += ' f200 ' ;
+  } 
+  if ($('#f400').is(':checked')){
+    in_byte |= 0x2000 ;
+	str += ' f400 ' ;
+  } 
+  if ($('#f1000').is(':checked')){
+    in_byte |= 0x4000 ;
+	str += ' f1000 ' ;
+  } 
+  if ($('#x2dead').is(':checked')){
+    in_byte |= 0x0800 ;
+	str += ' x2DEADZONE ' ;
+  } 
+  if ($('#x3dead').is(':checked')){
+    in_byte |= 0x8000 ;
+	str += ' x3DEADZONE ' ;
+  } 
+  if ($('#setnul').is(':checked')){
+    in_byte |= 0x0400 ;
+	str += ' setnul ' ;
+  } 
+  
+  log(str);
+  return in_byte ;
+}
+
 // при нажатии на кнопку START
 startButton.addEventListener('click', function() {
   log('start');
   var uuid = $('#startBtn').attr('data-uuid');
   var value = 0x01 ; // $('#startBtn').attr('data-value');
-  if (!$('#attenuator').is(':checked')){
-    value |= 0x40 ;
-	log('ATT Выключен');
-  } 
-  if ($('#once').is(':checked')){
-    value |= 0x20 ;
-	log('однократно');
-  } 
-  if ($('#HZ1600').is(':checked')){
-    value |= 0x04 ;
-	log('HZ1600');
-  } 
+  value = add_cfg_bits(value) ;
   var characteristic = charArray[uuid].characteristic;
   var converted = new Uint16Array([value]);
   characteristic.writeValue(converted);
@@ -56,18 +96,8 @@ fftStartButton.addEventListener('click', function() {
   log('fftstart');
   var uuid = $('#startBtn').attr('data-uuid');
   var value = 0x81 ; // $('#startBtn').attr('data-value');
-  if (!$('#attenuator').is(':checked')){
-    value |= 0x40 ;
-	log('ATT Выключен');
-  } 
-  if ($('#once').is(':checked')){
-    value |= 0x20 ;
-	log('однократно');
-  } 
-  if ($('#HZ1600').is(':checked')){
-    value |= 0x04 ;
-	log('HZ1600');
-  } 
+  value = add_cfg_bits(value) ;
+  
   var characteristic = charArray[uuid].characteristic;
   var converted = new Uint16Array([value]);
   characteristic.writeValue(converted);
@@ -78,18 +108,7 @@ rawDataStartButton.addEventListener('click', function() {
   log('rawdata_start');
   var uuid = $('#startBtn').attr('data-uuid');
   var value = 0x09 ; 
-  if (!$('#attenuator').is(':checked')){
-    value |= 0x40 ;
-	log('ATT Выключен');
-  } 
-  if ($('#once').is(':checked')){
-    value |= 0x20 ;
-	log('однократно');
-  } 
-  if ($('#HZ1600').is(':checked')){
-    value |= 0x04 ;
-	log('HZ1600');
-  } 
+  value = add_cfg_bits(value) ;
   
   var characteristic = charArray[uuid].characteristic;
   var converted = new Uint16Array([value]);

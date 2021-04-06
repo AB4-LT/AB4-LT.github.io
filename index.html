@@ -13,6 +13,9 @@
 <p>
   <button id="connect" type="button">Connect</button>
   <button id="disconnect" type="button">Disconnect</button>
+  <button id="startBtn" type="button">START</button>
+  <button id="stopBtn" type="button">STOP</button>
+  <button id="clrBtn" type="button">CLEAR</button>
 </p>
 <form id="send-form">
     <input id="input" type="text">
@@ -22,13 +25,38 @@
 <p>
   <input type="checkbox" id="attenuator" name="attenuator"checked>
   <label for="attenuator">ATT</label>
+
   <input type="checkbox" id="once" name="once">
   <label for="once">ONCE</label>
+
   <input type="checkbox" id="HZ1600" name="HZ1600">
   <label for="HZ1600">HZ1600</label>
-  <button id="startBtn" type="button">START</button>
-  <button id="stopBtn" type="button">STOP</button>
-  <button id="clrBtn" type="button">CLEAR</button>
+
+  <input type="checkbox" id="p4096" name="p4096">
+  <label for="p4096">4096</label>
+
+  <input type="checkbox" id="p1024" name="p1024">
+  <label for="p1024">1024</label>
+
+  <br><br>
+  <input type="checkbox" id="f200" name="f200">
+  <label for="f200">f200</label>
+
+  <input type="checkbox" id="f400" name="f400">
+  <label for="f400">f400</label>
+
+  <input type="checkbox" id="f1000" name="f1000">
+  <label for="f1000">f1000</label>
+  
+  <input type="checkbox" id="setnul" name="setnul">
+  <label for="setnul">-0-</label>
+  
+  <input type="checkbox" id="x2dead" name="x2dead">
+  <label for="x2dead">x2DZ</label>
+  
+  <input type="checkbox" id="x3dead" name="x3dead">
+  <label for="x3dead">x3DZ</label>
+  
   <br><br>
   <button id="fftStartBtn" type="button">FFTSTART</button>
   <button id="rawDataStartBtn" type="button">RAWDATA_START</button>
