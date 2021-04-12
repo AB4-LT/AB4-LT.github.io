@@ -11,11 +11,14 @@
 <body>
 
 <p>
+  <button id="clrBtn" type="button">CLEAR</button>
   <button id="connect" type="button">Connect</button>
   <button id="disconnect" type="button">Disconnect</button>
   <button id="startBtn" type="button">START</button>
+  <button id="fftStartBtn" type="button">FFTSTART</button>
+  <button id="rawDataStartBtn" type="button">RAWDATA_START</button>
   <button id="stopBtn" type="button">STOP</button>
-  <button id="clrBtn" type="button">CLEAR</button>
+  <button id="fftSaveBtn" type="button">SAVE TO CSV</button>
 </p>
 <form id="send-form">
     <input id="input" type="text">
@@ -38,7 +41,6 @@
   <input type="checkbox" id="p1024" name="p1024">
   <label for="p1024">1024</label>
 
-  <br><br>
   <input type="checkbox" id="f200" name="f200">
   <label for="f200">f200</label>
 
@@ -56,11 +58,13 @@
   
   <input type="checkbox" id="x3dead" name="x3dead">
   <label for="x3dead">x3DZ</label>
-  
-  <br><br>
-  <button id="fftStartBtn" type="button">FFTSTART</button>
-  <button id="rawDataStartBtn" type="button">RAWDATA_START</button>
-  <button id="fftSaveBtn" type="button">SAVE TO CSV</button>
+ 
+  <input type="checkbox" id="adxl_1ms" name="adxl_1ms">
+  <label for="adxl_1ms">adxl_1ms</label>
+ 
+  <input type="checkbox" id="adxl_fifo" name="adxl_fifo"checked>
+  <label for="adxl_fifo">adxl_fifo</label>
+ 
   <br>
   <h1>Виброскорость: <span id="vibrospeed">...</span></h1>
 </p>

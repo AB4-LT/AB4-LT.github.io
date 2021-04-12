@@ -32,16 +32,24 @@ var coefficient_freq = 10000 ;
 function add_cfg_bits(in_byte) {
   str = ''
   if (!$('#attenuator').is(':checked')){
-    in_byte |= 0x40 ;
+    in_byte |= 0x04 ;
     str += ' ATT Выключен ' ;
   } 
   if ($('#once').is(':checked')){
-    in_byte |= 0x20 ;
+    in_byte |= 0x02 ;
     str += ' однократно ' ;
   } 
   if ($('#HZ1600').is(':checked')){
-    in_byte |= 0x04 ;
+    in_byte |= 0x08 ;
 	str += ' HZ1600 ' ;
+  } 
+  if ($('#adxl_1ms').is(':checked')){
+    in_byte |= 0x0040 ;
+	str += ' adxl_1ms ' ;
+  } 
+  if ($('#adxl_fifo').is(':checked')){
+    in_byte |= 0x0080 ;
+	str += ' adxl_fifo ' ;
   } 
   if ($('#p4096').is(':checked')){
     in_byte |= 0x0100 ;
@@ -60,20 +68,21 @@ function add_cfg_bits(in_byte) {
 	str += ' f400 ' ;
   } 
   if ($('#f1000').is(':checked')){
-    in_byte |= 0x4000 ;
+    in_byte |= 0x1000 ;
+    in_byte |= 0x2000 ;
 	str += ' f1000 ' ;
   } 
+  if ($('#setnul').is(':checked')){
+    in_byte |= 0x0400 ;
+	str += ' setnul ' ;
+  } 
   if ($('#x2dead').is(':checked')){
-    in_byte |= 0x0800 ;
+    in_byte |= 0x4000 ;
 	str += ' x2DEADZONE ' ;
   } 
   if ($('#x3dead').is(':checked')){
     in_byte |= 0x8000 ;
 	str += ' x3DEADZONE ' ;
-  } 
-  if ($('#setnul').is(':checked')){
-    in_byte |= 0x0400 ;
-	str += ' setnul ' ;
   } 
   
   log(str);
@@ -95,7 +104,7 @@ startButton.addEventListener('click', function() {
 fftStartButton.addEventListener('click', function() {
   log('fftstart');
   var uuid = $('#startBtn').attr('data-uuid');
-  var value = 0x81 ; // $('#startBtn').attr('data-value');
+  var value = 0x11 ; // $('#startBtn').attr('data-value');
   value = add_cfg_bits(value) ;
   
   var characteristic = charArray[uuid].characteristic;
@@ -107,7 +116,7 @@ fftStartButton.addEventListener('click', function() {
 rawDataStartButton.addEventListener('click', function() {
   log('rawdata_start');
   var uuid = $('#startBtn').attr('data-uuid');
-  var value = 0x09 ; 
+  var value = 0x21 ; 
   value = add_cfg_bits(value) ;
   
   var characteristic = charArray[uuid].characteristic;
