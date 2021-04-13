@@ -84,7 +84,11 @@ function add_cfg_bits(in_byte) {
     in_byte |= 0x8000 ;
 	str += ' x3DEADZONE ' ;
   } 
-  
+  if ($('#x1_fft  ').is(':checked')){
+    in_byte |= 0x0800 ;
+	str += ' x1_fft   ' ;
+  } 
+
   log(str);
   return in_byte ;
 }
@@ -419,7 +423,26 @@ function handleFftChanged(event) {
 
 		datau = [] ;
 		var freq ;
-		for (let i=1;i<n_points;i+=1) { freq = (i*(pic32_fft_points/n_points)*(pic32_sample_freq/pic32_fft_len)*(10000/coefficient_freq)) ; datau.push([freq, fftByteArray[i]/4000]); }
+		var deadzone ;
+		for (let i=1;i<n_points;i+=1) { 
+            freq = (i*(pic32_fft_points/n_points)*(pic32_sample_freq/pic32_fft_len)*(10000/coefficient_freq)) ; 
+            if ($('#fft_velocity').is(':checked')){
+                //velocity_fft[i] = Math.pow(velocity_fft[i]* pow( G_MM_S2 * MM_IN_METER, 2) / (4 * pow(pi, 2)), 0.5) / pow(2, 0.5)
+                //print(pow( pow( G_MM_S2 * MM_IN_METER, 2) / (4 * pow(pi, 2)), 0.5) / pow(2, 0.5))
+                
+                deadzone = 0.004 ;
+                if ($('#x2dead').is(':checked')) { deadzone *= 2 ; }
+                else if ($('#x3dead').is(':checked')) { deadzone *= 3 ; }
+                
+                if( (freq > 9.5) && ((fftByteArray[i]/4000) >= deadzone) )  {
+                    datau.push([freq, 1103.6358752302604* (fftByteArray[i]/4000) / freq]); 
+                } else {
+                    datau.push([freq, 0 ]); 
+                }
+            } else {
+                datau.push([freq, fftByteArray[i]/4000]); 
+            }
+        }
 		console.log(datau);
 		ShowGrf();
 		freq = 0 ; datau.push([freq, fftByteArray[0]/4000]);
