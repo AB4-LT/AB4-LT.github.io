@@ -18,12 +18,12 @@ let graphDiv = document.getElementById('div_v');
 let graphLab = document.getElementById('labdiv');
 
 
-var pic32_fft_points = 2*4096
-var pic32_fft_len = 2*4096
+var pic32_fft_points = 3*4096
+var pic32_fft_len = 3*4096
 var pic32_sample_freq = 3200
 var n_points = 4096 ;
-var fftByteArray = new Uint16Array(2*4096+10);
-var rawDataByteArray = new Int16Array(2*4096+10);
+var fftByteArray = new Uint16Array(3*4096+10);
+var rawDataByteArray = new Int16Array(3*4096+10);
 
 var devicename = 'data' ;
 
@@ -87,6 +87,14 @@ function add_cfg_bits(in_byte) {
   if ($('#x1_fft  ').is(':checked')){
     in_byte |= 0x0800 ;
 	str += ' x1_fft   ' ;
+  } 
+  if ($('#axis_X').is(':checked')){
+    in_byte |= 0x08 ;
+	str += ' axis_X ' ;
+  } 
+  if ($('#axis_Y').is(':checked')){
+    in_byte |= 0x0400 ;
+	str += ' axis_Y ' ;
   } 
 
   log(str);
@@ -408,7 +416,11 @@ function disconnect() {
 // Получение fft data
 function handleFftChanged(event) {
   var block = event.target.value.getUint8(0) ;
-  if(block < 0x80) { //приём 75 блоков FFT
+  
+  if(block == 0x7E) { //приём виброскоростиь по трём координатам
+    log(event.target.value.getInt32(1, true)/100 + '    [' + event.target.value.getInt16(5, true)/100 + ',   ' + event.target.value.getInt16(7, true)/100 + ',   ' + event.target.value.getInt16(9, true)/100 + ']    ' + event.target.value.getInt32(11, true) + '  lines ' + event.target.value.getInt16(15, true) , 'in'); 
+    vibrospeedLabel.innerHTML =  event.target.value.getInt32(1, true)/100 + '    [' + event.target.value.getInt16(5, true)/100 + ',   ' + event.target.value.getInt16(7, true)/100 + ',   ' + event.target.value.getInt16(9, true)/100 + ']    ' + event.target.value.getInt32(11, true) + '  lines ' + event.target.value.getInt16(15, true) ;
+  } else if(block < 0x80) { //приём 75 блоков FFT
       if(block == 0x7F) {
 		n_points          = event.target.value.getUint16(1+0, true)*9 ;
 		pic32_fft_points  = event.target.value.getUint16(1+2, true) ;
@@ -501,8 +513,8 @@ function handleCoefficientValueChanged(event) {
 
 // Получение данных
 function handleCharacteristicValueChanged(event) {
-  log(event.target.value.getInt32(0)/100, 'in'); // (0, littleEndian)
-  vibrospeedLabel.innerHTML =  event.target.value.getInt32(0)/100 ;
+    log(event.target.value.getInt32(0)/100, 'in'); // (0, littleEndian)
+    vibrospeedLabel.innerHTML =  event.target.value.getInt32(0)/100 ;
 }
 
 function int16ToInt8Array(value) {
